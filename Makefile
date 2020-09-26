@@ -21,7 +21,7 @@ start_server: server
 	$(BIN_DIR)/server
 
 start_client: client
-	$(BIN_DIR)/client localhost
+	$(BIN_DIR)/client ass asas localhost 4000
 
 clean:
 	rm -rf $(BIN_DIR)/*
