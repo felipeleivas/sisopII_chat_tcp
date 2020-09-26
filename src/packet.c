@@ -38,10 +38,10 @@ PACKET create_packet(uint16_t type, uint16_t seqn, uint16_t length, uint16_t tim
   return new_packet;
 }
 
-char *serialize_packet(PACKET packet)
+char *serialize_packet(PACKET packet, char *serialized_packet)
 {
   int data_load_size = strlen(packet._payload);
-  char *serialized_packet = realloc(NULL, sizeof(char) * (data_load_size + 4 * sizeof(uint16_t)));
+  // char *serialized_packet = realloc(NULL, sizeof(char) * (data_load_size + 4 * sizeof(uint16_t)));
   for (int i = 0; i < sizeof(char) * (data_load_size + 4 * sizeof(uint16_t)); i++)
   {
     serialized_packet[i] = 0;

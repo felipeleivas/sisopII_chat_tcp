@@ -10,7 +10,6 @@
 
 #include "../lib/packet.h"
 
-#define PORT 4000
 
 int main(int argc, char *argv[])
 {
@@ -19,12 +18,15 @@ int main(int argc, char *argv[])
     struct hostent *server;
 	
     char buffer[256];
-    if (argc < 2) {
-		fprintf(stderr,"usage %s hostname\n", argv[0]);
+    if (argc < 5) {
+		fprintf(stderr,"usage %s <username> <groupname> <server_ip_address> <port>\n", argv[0]);
 		exit(0);
     }
-	
-	server = gethostbyname(argv[1]);
+  char* username = argv[1];  
+  char* groupName = argv[2];  
+	server = gethostbyname(argv[3]);
+	int port = atoi(argv[4]);
+
 	if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
@@ -34,7 +36,7 @@ int main(int argc, char *argv[])
         printf("ERROR opening socket\n");
     
 	serv_addr.sin_family = AF_INET;     
-	serv_addr.sin_port = htons(PORT);    
+	serv_addr.sin_port = htons(port);    
 	serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
 	bzero(&(serv_addr.sin_zero), 8);     
 	
@@ -46,14 +48,16 @@ int main(int argc, char *argv[])
         printf("Enter the message: ");
         bzero(buffer, 256);
         fgets(buffer, 256, stdin);
-        // for(int i = 0; i<256; i++) printf("%u ", buffer[i]);
+
         PACKET packet = create_packet(DATA_PACKET, seqn++, strlen(buffer),(int)time(NULL), buffer ); 
         PACKET other_packet;
       
     	/* write in the socket */
-    	  n = write(sockfd, serialize_packet(packet), strlen(buffer) + HEADER_SIZE);
+        char *serialized_packet = realloc(NULL, sizeof(char) * (strlen(buffer) + 4 * sizeof(uint16_t)));
+    	  n = write(sockfd, serialize_packet(packet, serialized_packet), strlen(buffer) + HEADER_SIZE);
         if (n < 0) 
     		  printf("ERROR writing to socket\n");
+        free(serialized_packet);
     	    	
     }
 	close(sockfd);
