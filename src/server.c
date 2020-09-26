@@ -10,11 +10,45 @@
 
 #define PORT 4000
 
+void read_message(int socket, char *message_holder, int length){
+    int total_read_bytes = 0;
+    while (length > total_read_bytes)
+    {
+      int read_bytes = read(socket, message_holder, length);
+      if (read_bytes < 0)
+      {
+        printf("Erro reading header");
+      }
+      total_read_bytes += read_bytes;
+    }
+}
+
+void read_header(int socket, PACKET *packet){
+    char packet_header[HEADER_SIZE];
+    bzero(packet_header, HEADER_SIZE);
+    read_message(socket, packet_header, HEADER_SIZE);
+    deserialize_header(packet_header, packet);
+}
+
+void receive_message_from_client(int socket){
+  PACKET packet;
+  read_header(socket, &packet);
+
+  int n=0;
+  int message_length = packet.length;
+  char message[message_length];
+  read_message(socket, message, message_length);
+
+  printf("Here is the message: %s\n", message);
+
+  if (n < 0)
+  printf("ERROR writing to socket");
+}
+
 int main(int argc, char *argv[])
 {
-  int sockfd, newsockfd, n;
+  int sockfd;
   socklen_t clilen;
-  char buffer[256];
   struct sockaddr_in serv_addr, cli_addr;
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -42,56 +76,14 @@ int main(int argc, char *argv[])
     if (pid > 0)
     {
       clilen = sizeof(struct sockaddr_in);
-      if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1)
-      {
-        
-      }
-      else{
-          
-
-      }
+      if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){}
       pid = fork();
     }
     if (pid == 0)
     {
       while (1)
       {
-        char packet_header[HEADER_SIZE];
-        bzero(packet_header, HEADER_SIZE);
-
-        n = 0;
-
-        while (HEADER_SIZE > n)
-        {
-          int readBytes = read(newsockfd, packet_header, HEADER_SIZE);
-          if (readBytes < 0)
-          {
-            printf("Erro reading header");
-          }
-          n += readBytes;
-        }
-
-        PACKET packet;
-        deserialize_header(packet_header, &packet);
-
-        n = 0;
-        int message_length = packet.length;
-        char message[message_length];
-
-        while (n < message_length)
-        {
-          int readBytes = read(newsockfd, message, message_length);
-          if (readBytes < 0)
-          {
-            printf("Erro reading message");
-          }
-          n += readBytes;
-        }
-
-        printf("Here is the message: %s\n", message);
-
-        if (n < 0)
-          printf("ERROR writing to socket");
+        receive_message_from_client(newsockfd);
       }
       close(newsockfd);
       return 0;
