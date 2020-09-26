@@ -41,25 +41,20 @@ int main(int argc, char *argv[])
     
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
         printf("ERROR connecting\n");
-    int seqn = 512;
+    int seqn = 0;
     while(1){
-
         printf("Enter the message: ");
         bzero(buffer, 256);
         fgets(buffer, 256, stdin);
-        buffer[256]='\0';
+        // for(int i = 0; i<256; i++) printf("%u ", buffer[i]);
         PACKET packet = create_packet(DATA_PACKET, seqn++, strlen(buffer),(int)time(NULL), buffer ); 
-        printf("Sending data header: type: %u, seq: %u, length %u and timestamp %u\n", ntohs(packet.type), ntohs(packet.seqn), ntohs(packet.length), packet.timestamp);
-        deserialize_header(serialize_packet(packet), &packet) ;
-        printf("\nReceiving data header: type: %u, seq: %u, length %u and timestamp %u\n", ntohs(packet.type), ntohs(packet.seqn), ntohs(packet.length), packet.timestamp);
+        PACKET other_packet;
+      
     	/* write in the socket */
-    	  n = write(sockfd, serialize_packet(packet), 256 + HEADER_SIZE);
+    	  n = write(sockfd, serialize_packet(packet), strlen(buffer) + HEADER_SIZE);
         if (n < 0) 
     		  printf("ERROR writing to socket\n");
-        printf("\nSend %d bytes", n);
-        bzero(buffer,256);
-    	
-    	
+    	    	
     }
 	close(sockfd);
     return 0;

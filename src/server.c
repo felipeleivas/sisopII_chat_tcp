@@ -44,10 +44,10 @@ int main(int argc, char *argv[])
       clilen = sizeof(struct sockaddr_in);
       if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1)
       {
-        // fprintf(stderr, "ERROR on accept \n");
+        
       }
       else{
-          // fprintf(stderr, "Connected \n");
+          
 
       }
       pid = fork();
@@ -60,43 +60,30 @@ int main(int argc, char *argv[])
         bzero(packet_header, HEADER_SIZE);
 
         n = 0;
-        // fprintf(stderr, "Going into while");
 
         while (HEADER_SIZE > n)
         {
-          // fprintf(stderr, "Going to read the header");
-
           int readBytes = read(newsockfd, packet_header, HEADER_SIZE);
           if (readBytes < 0)
           {
-            // fprintf(stderr, "ERROR reading header from packet");
-          }
-          else
-          {
-            // fprintf(stderr, "Received %n bytes", readBytes);
-            printf("Read %u", n);
+            printf("Erro reading header");
           }
           n += readBytes;
         }
 
         PACKET packet;
         deserialize_header(packet_header, &packet);
-        printf("Received data header: type: %u, seq: %u, length %u and timestamp %u", ntohs(packet.type), ntohs(packet.seqn), ntohs(packet.length), ntohs(packet.timestamp));
 
         n = 0;
-        // int message_length = packet.length;
-        int message_length = 256;
+        int message_length = packet.length;
         char message[message_length];
-        printf("\n message length = %u\n", message_length);
+
         while (n < message_length)
         {
           int readBytes = read(newsockfd, message, message_length);
           if (readBytes < 0)
           {
-            // fprintf(stderr, "ERROR reading header from packet");
-          }
-          else{
-            printf("Read payload: %u", n);
+            printf("Erro reading message");
           }
           n += readBytes;
         }
