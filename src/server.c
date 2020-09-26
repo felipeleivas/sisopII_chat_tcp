@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include "../lib/packet.h"
 
@@ -17,7 +18,7 @@ void read_message(int socket, char *message_holder, int length){
       int read_bytes = read(socket, message_holder, length);
       if (read_bytes < 0)
       {
-        printf("Erro reading header");
+        printf("Erro reading message");
       }
       total_read_bytes += read_bytes;
     }
@@ -33,16 +34,18 @@ void read_header(int socket, PACKET *packet){
 void receive_message_from_client(int socket){
   PACKET packet;
   read_header(socket, &packet);
-
-  int n=0;
   int message_length = packet.length;
   char message[message_length];
   read_message(socket, message, message_length);
-
   printf("Here is the message: %s\n", message);
 
-  if (n < 0)
-  printf("ERROR writing to socket");
+}
+
+void handle_connection_with_client(int socket){
+  while(1){
+    receive_message_from_client(socket);
+  }
+  close(socket);
 }
 
 int main(int argc, char *argv[])
@@ -66,28 +69,16 @@ int main(int argc, char *argv[])
   }
 
   listen(sockfd, 5);
-  // fprintf(stderr, "listen\n");
   printf("listen\n");
   int pid = 1;
   while (1)
   {
-
     int newsockfd;
-    if (pid > 0)
-    {
-      clilen = sizeof(struct sockaddr_in);
-      if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){}
-      pid = fork();
-    }
-    if (pid == 0)
-    {
-      while (1)
-      {
-        receive_message_from_client(newsockfd);
-      }
-      close(newsockfd);
-      return 0;
-    }
+    clilen = sizeof(struct sockaddr_in);
+    if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){}
+    pthread_t client_connection_thread;
+    pthread_create(client_connection_thread, NULL, handle_connection_with_client, newsockfd);
+
   }
   close(sockfd);
 
