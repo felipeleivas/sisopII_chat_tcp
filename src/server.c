@@ -38,8 +38,7 @@ void receive_message_from_client(int socket){
   char message[message_length + 1];
   message[message_length]='\0';
   read_message(socket, message, message_length);
-  printf("\nHere is the message: %s - %d ", message, message_length);
-
+  printf("\nHere is the message: %s", message);
 }
 
 void handle_connection_with_client(void *socket_pointer){
