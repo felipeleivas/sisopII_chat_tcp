@@ -71,5 +71,5 @@ void deserialize_header(char *serialize_header, PACKET *new_packet)
   new_packet->seqn = ntohs(catosi(serialize_header + 2));      //sizeof(uint16_t));
   new_packet->length = ntohs(catosi(serialize_header + 4));    //sizeof(uint16_t) * 2);
   new_packet->timestamp = ntohs(catosi(serialize_header + 6)); //sizeof(uint16_t) * 3);
-  new_packet->_payload = serialize_packet + 8;
+  
 }

@@ -35,24 +35,24 @@ void receive_message_from_client(int socket){
   PACKET packet;
   read_header(socket, &packet);
   int message_length = packet.length;
-  char message[message_length];
+  char message[message_length + 1];
+  message[message_length]='\0';
   read_message(socket, message, message_length);
-  printf("Here is the message: %s\n", message);
+  printf("\nHere is the message: %s - %d ", message, message_length);
 
 }
 
-void handle_connection_with_client(int socket){
+void handle_connection_with_client(void *socket_pointer){
+  int socket = * (int *) socket_pointer;
   while(1){
     receive_message_from_client(socket);
   }
   close(socket);
 }
 
-int main(int argc, char *argv[])
-{
+int bind_server_to_socket(){
   int sockfd;
-  socklen_t clilen;
-  struct sockaddr_in serv_addr, cli_addr;
+  struct sockaddr_in serv_addr;
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     fprintf(stderr, "ERROR opening socket");
@@ -67,17 +67,31 @@ int main(int argc, char *argv[])
     fprintf(stderr, "ERROR on binding");
     exit(-1);
   }
+  return sockfd;
+}
+
+int accept_connection(int sockfd ){
+  int newsockfd;
+  struct sockaddr_in cli_addr;
+
+  socklen_t clilen = sizeof(struct sockaddr_in);
+  if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){
+    printf("Could not accept this connection");
+  }
+  return newsockfd;
+}
+
+int main(int argc, char *argv[])
+{
+  int sockfd = bind_server_to_socket();
 
   listen(sockfd, 5);
-  printf("listen\n");
-  int pid = 1;
+
   while (1)
   {
-    int newsockfd;
-    clilen = sizeof(struct sockaddr_in);
-    if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){}
+    int newsockfd = accept_connection(sockfd);
     pthread_t client_connection_thread;
-    pthread_create(client_connection_thread, NULL, handle_connection_with_client, newsockfd);
+    pthread_create(&client_connection_thread, NULL, (void *) handle_connection_with_client, &newsockfd);
 
   }
   close(sockfd);
