@@ -8,9 +8,12 @@
 #include <pthread.h>
 
 #include "../lib/packet.h"
+#include "../lib/group.h"
 
 #define PORT 4000
 
+
+GROUP_LIST* group_list = NULL;
 void read_message(int socket, char *message_holder, int length){
     int total_read_bytes = 0;
     while (length > total_read_bytes)
@@ -24,6 +27,11 @@ void read_message(int socket, char *message_holder, int length){
     }
 }
 
+void print_message(void * arg){
+    char* string = (char*) arg;
+    printf("%s", string);
+
+}
 void read_header(int socket, PACKET *packet){
     char packet_header[HEADER_SIZE];
     bzero(packet_header, HEADER_SIZE);
@@ -31,20 +39,43 @@ void read_header(int socket, PACKET *packet){
     deserialize_header(packet_header, packet);
 }
 
-void receive_message_from_client(int socket){
+char* receive_message_from_client(int socket){
   PACKET packet;
   read_header(socket, &packet);
   int message_length = packet.length;
-  char message[message_length + 1];
+  char *message = realloc(NULL, (sizeof(char) * message_length) + 1);
   message[message_length]='\0';
   read_message(socket, message, message_length);
-  printf("\nHere is the message: %s", message);
+  return message;
+}
+
+GROUP* create_group(char* group_name){
+    GROUP* found_group = malloc(sizeof(GROUP));
+    found_group->name = group_name;
+    found_group->connected_users = NULL;
+    group_list = add_group_list(group_list, found_group);
+    return found_group;
 }
 
 void handle_connection_with_client(void *socket_pointer){
   int socket = * (int *) socket_pointer;
+  char* username = receive_message_from_client(socket);
+  char* groupname = receive_message_from_client(socket);
+  
+  GROUP* found_group = find_group(group_list, groupname);
+  if(found_group == NULL){
+    found_group = create_group(groupname);
+  }
+
+  associate_socket_group(socket, found_group);
+
+  print_group_list(group_list);
+
   while(1){
-    receive_message_from_client(socket);
+    
+    char *message = receive_message_from_client(socket);
+    printf("\nHere is the message: %s", message);
+
   }
   close(socket);
 }
