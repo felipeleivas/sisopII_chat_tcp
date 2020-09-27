@@ -8,14 +8,16 @@ all: directory clean lib
 directory:
 	mkdir lib -p
 
-server: packet.o
-	$(CC) $(SRC_DIR)/server.c -o $(BIN_DIR)/server $(BIN_DIR)/packet.o -g -Wall
+server: packet.o group.o
+	$(CC) $(SRC_DIR)/server.c -o $(BIN_DIR)/server $(BIN_DIR)/packet.o $(BIN_DIR)/group.o -g -Wall
 
 client: packet.o
 	$(CC) $(SRC_DIR)/client.c -o $(BIN_DIR)/client $(BIN_DIR)/packet.o -g -Wall
 
 packet.o:
 	$(CC) -c $(SRC_DIR)/packet.c -o $(BIN_DIR)/packet.o -Wall 
+group.o:
+	$(CC) -c $(SRC_DIR)/group.c -o $(BIN_DIR)/group.o -Wall 
 
 start_server: server
 	$(BIN_DIR)/server
