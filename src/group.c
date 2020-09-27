@@ -8,21 +8,25 @@
 #include <pthread.h>
 
 #include "../lib/group.h"
-
-void print_group_list(GROUP_LIST *group_list){
+#include "../lib/communication.h"
+#include "../lib/packet.h"
+void print_connection_list(INT_LIST *int_list){
+	while (int_list != NULL)
+	{
+		printf(" %d,", int_list->pid);
+		int_list = int_list->next;
+	}
+}
+void print_group_list(GROUP_LIST *group_list)
+{
 	printf("\n Groups: ");
-	while(group_list != NULL){
+	while (group_list != NULL)
+	{
 		printf("\n%s, connected_users: ", group_list->group->name);
-		INT_LIST* int_list = group_list->group->connected_users;
-		while(int_list != NULL){
-			printf(" %d,", int_list->pid);
-			int_list = int_list->next;
-		}
+		print_connection_list(group_list->group->connected_users);
 		group_list = group_list->next;
 	}
-
 }
-
 
 GROUP *find_group(GROUP_LIST *group_list, char *group_name)
 {
@@ -63,11 +67,12 @@ GROUP_LIST *add_group_list(GROUP_LIST *group_list, GROUP *group)
 	}
 }
 
-GROUP* create_new_group(char* group_name){
-	GROUP* group = malloc(sizeof(GROUP));
-    group->name = group_name;
-    group->connected_users = NULL;
-    group->seqn = 0;
+GROUP *create_new_group(char *group_name)
+{
+	GROUP *group = malloc(sizeof(GROUP));
+	group->name = group_name;
+	group->connected_users = NULL;
+	group->seqn = 0;
 	return group;
 }
 
@@ -96,20 +101,60 @@ INT_LIST *add_socket_list(INT_LIST *int_list, int socket)
 	}
 }
 
-void associate_socket_group(int socket, GROUP* group){
-	group->connected_users = add_socket_list (group->connected_users, socket);
+INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
+{
+
+	//TODO this is a critical section, and should be handle as so
+	printf("\nBEFORE: ");
+	print_connection_list(int_list);
+	INT_LIST *first_element_list = int_list;
+
+
+	INT_LIST *before = NULL;
+	while (int_list != NULL)
+	{
+		if(int_list->pid == socket){
+			if(before != NULL){
+				before->next = int_list->next;
+			}
+			else{
+				first_element_list = int_list->next;
+			}
+			free(int_list);
+			printf("REMOVED connection");
+		}else{
+			before = int_list;
+		}
+		int_list = int_list->next;
+
+	}
+	printf("AFTER: \n");
+
+	print_connection_list(first_element_list);
+	printf("\n");
+	return first_element_list;
 }
 
-void send_message_to_group(GROUP* group, char* message){
-	
-		INT_LIST* socket_list = group->connected_users;
-		while(socket_list != NULL){
-			int socket = socket_list->pid;
 
-			socket_list = socket_list->next;
+void associate_socket_group(int socket, GROUP *group)
+{
+	group->connected_users = add_socket_list(group->connected_users, socket);
+}
+
+void send_message_to_group(GROUP *group, char *message)
+{
+
+	INT_LIST *socket_list = group->connected_users;
+	while (socket_list != NULL)
+	{
+		int socket = socket_list->pid;
+		if(send_message(DATA_PACKET, socket, message, group->seqn) == -1){
+			socket_list = remove_socket_list(socket_list, socket);
+			group->connected_users = socket_list;
 		}
-		
-	
+		socket_list = socket_list->next;
+	}
+	group->seqn = group->seqn +1;
 }
 
 // int main()
@@ -142,5 +187,8 @@ void send_message_to_group(GROUP* group, char* message){
 // 	associate_socket_group(8, &group2);
 // 	associate_socket_group(9, &group4);
 // 	associate_socket_group(10, &group4);
+
 // 	print_group_list(groups);
+// 	remove_socket_list(group1.connected_users, 3);
+// 	remove_socket_list(group1.connected_users, 2);
 // }

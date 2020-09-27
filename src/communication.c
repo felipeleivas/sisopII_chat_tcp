@@ -10,7 +10,7 @@
 
 #include "../lib/packet.h"
 
-void send_message(int data_type, int sockfd, char *message, int seqn)
+int send_message(int data_type, int sockfd, char *message, int seqn)
 {
   int message_len = strlen(message);
   PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
@@ -19,11 +19,13 @@ void send_message(int data_type, int sockfd, char *message, int seqn)
   int written_bytes = write(sockfd, serialize_packet(packet, serialized_packet), message_len + HEADER_SIZE);
   if (written_bytes < 0){
     printf("ERROR sending message\n");
+    return -1;
   }
   free(serialized_packet);
+  return 0;
 }
 
-void read_message(int socket, char *message_holder, int length){
+int read_message(int socket, char *message_holder, int length){
     int total_read_bytes = 0;
     while (length > total_read_bytes)
     {
@@ -31,27 +33,36 @@ void read_message(int socket, char *message_holder, int length){
       if (read_bytes < 0)
       {
         printf("Erro reading message");
+        return -1;
       }
       total_read_bytes += read_bytes;
     }
+    return 0;
 }
 
 
-void read_header(int socket, PACKET *packet){
+int read_header(int socket, PACKET *packet){
     char packet_header[HEADER_SIZE];
     bzero(packet_header, HEADER_SIZE);
-    read_message(socket, packet_header, HEADER_SIZE);
+    if(read_message(socket, packet_header, HEADER_SIZE) <0){
+      return -1;
+    }
     deserialize_header(packet_header, packet);
+    return 0;
 }
 
 char* receive_message(int socket){
   PACKET packet;
   read_header(socket, &packet);
   int message_length = packet.length;
-  char *message = realloc(NULL, (sizeof(char) * message_length) + 1);
-  message[message_length]='\0';
-  read_message(socket, message, message_length);
-  return message;
+
+  char *return_message = realloc(NULL,(sizeof(char) * message_length) + 1);
+  return_message[message_length]='\0';
+  if(read_message(socket, return_message, message_length) == -1){
+    return NULL;
+  }
+
+  return return_message;
 }
 
 

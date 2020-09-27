@@ -6,6 +6,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <signal.h>
+
+void sigpipe_handler(int unused)
+{
+}
 
 #include "../lib/packet.h"
 #include "../lib/group.h"
@@ -13,89 +18,105 @@
 
 #define PORT 4000
 
+GROUP_LIST *group_list = NULL;
 
-GROUP_LIST* group_list = NULL;
-
-void print_message(void * arg){
-    char* string = (char*) arg;
-    printf("%s", string);
-
+void print_message(void *arg)
+{
+	char *string = (char *)arg;
+	printf("%s", string);
 }
 
-GROUP* create_group(char* group_name){
-    GROUP* new_group = create_new_group(group_name);
-    group_list = add_group_list(group_list, new_group);
-    return new_group;
+GROUP *create_group(char *group_name)
+{
+	GROUP *new_group = create_new_group(group_name);
+	group_list = add_group_list(group_list, new_group);
+	return new_group;
 }
 
-void handle_connection_with_client(void *socket_pointer){
-  int socket = * (int *) socket_pointer;
-  char* username = receive_message(socket);
-  char* groupname = receive_message(socket);
-  
-  GROUP* found_group = find_group(group_list, groupname);
-  if(found_group == NULL){
-    found_group = create_group(groupname);
-  }
+void handle_connection_with_client(void *socket_pointer)
+{
+	int socket = *(int *)socket_pointer;
+	char *username = receive_message(socket);
+	char *groupname = receive_message(socket);
+	GROUP *found_group = find_group(group_list, groupname);
+	if (found_group == NULL)
+	{
+		found_group = create_group(groupname);
+	}
 
-  associate_socket_group(socket, found_group);
+	associate_socket_group(socket, found_group);
 
-  print_group_list(group_list);
+	print_group_list(group_list);
+	int connection_is_alive = 1;
+	while (connection_is_alive)
+	{
 
-  while(1){
-    
-    char *message = receive_message(socket);
-    printf("\nHere is the message: %s", message);
-
-  }
-  close(socket);
+		char *message = receive_message(socket);
+		if (message != NULL)
+		{
+			send_message_to_group(found_group, message);
+			free(message);
+		}
+		else{
+			connection_is_alive = 0;
+		}
+	}
+	free(username);
+	free(groupname);
+	close(socket);
 }
 
-int bind_server_to_socket(){
-  int sockfd;
-  struct sockaddr_in serv_addr;
+int bind_server_to_socket()
+{
+	int sockfd;
+	struct sockaddr_in serv_addr;
 
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    fprintf(stderr, "ERROR opening socket");
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		fprintf(stderr, "ERROR opening socket");
 
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(PORT);
-  serv_addr.sin_addr.s_addr = INADDR_ANY;
-  bzero(&(serv_addr.sin_zero), 8);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(PORT);
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	bzero(&(serv_addr.sin_zero), 8);
 
-  if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-  {
-    fprintf(stderr, "ERROR on binding");
-    exit(-1);
-  }
-  return sockfd;
+	if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		fprintf(stderr, "ERROR on binding");
+		exit(-1);
+	}
+	return sockfd;
 }
 
-int accept_connection(int sockfd ){
-  int newsockfd;
-  struct sockaddr_in cli_addr;
+int accept_connection(int sockfd)
+{
+	int newsockfd;
+	struct sockaddr_in cli_addr;
 
-  socklen_t clilen = sizeof(struct sockaddr_in);
-  if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1){
-    printf("Could not accept this connection");
-  }
-  return newsockfd;
+	socklen_t clilen = sizeof(struct sockaddr_in);
+	if ((newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen)) == -1)
+	{
+		printf("Could not accept this connection");
+	}
+	return newsockfd;
 }
 
 int main(int argc, char *argv[])
 {
-  int sockfd = bind_server_to_socket();
+	sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
 
-  listen(sockfd, 5);
+	int sockfd = bind_server_to_socket();
 
-  while (1)
-  {
-    int newsockfd = accept_connection(sockfd);
-    pthread_t client_connection_thread;
-    pthread_create(&client_connection_thread, NULL, (void *) handle_connection_with_client, &newsockfd);
+	listen(sockfd, 5);
 
-  }
-  close(sockfd);
+	while (1)
+	{
+		int newsockfd = accept_connection(sockfd);
+		if(newsockfd >= 0 ){
+			pthread_t client_connection_thread;
+			pthread_create(&client_connection_thread, NULL, (void *)handle_connection_with_client, &newsockfd);
+		}
+	}
+	close(sockfd);
 
-  return 0;
+	return 0;
 }
