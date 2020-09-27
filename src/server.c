@@ -9,58 +9,29 @@
 
 #include "../lib/packet.h"
 #include "../lib/group.h"
+#include "../lib/communication.h"
 
 #define PORT 4000
 
 
 GROUP_LIST* group_list = NULL;
-void read_message(int socket, char *message_holder, int length){
-    int total_read_bytes = 0;
-    while (length > total_read_bytes)
-    {
-      int read_bytes = read(socket, message_holder, length);
-      if (read_bytes < 0)
-      {
-        printf("Erro reading message");
-      }
-      total_read_bytes += read_bytes;
-    }
-}
 
 void print_message(void * arg){
     char* string = (char*) arg;
     printf("%s", string);
 
 }
-void read_header(int socket, PACKET *packet){
-    char packet_header[HEADER_SIZE];
-    bzero(packet_header, HEADER_SIZE);
-    read_message(socket, packet_header, HEADER_SIZE);
-    deserialize_header(packet_header, packet);
-}
-
-char* receive_message_from_client(int socket){
-  PACKET packet;
-  read_header(socket, &packet);
-  int message_length = packet.length;
-  char *message = realloc(NULL, (sizeof(char) * message_length) + 1);
-  message[message_length]='\0';
-  read_message(socket, message, message_length);
-  return message;
-}
 
 GROUP* create_group(char* group_name){
-    GROUP* found_group = malloc(sizeof(GROUP));
-    found_group->name = group_name;
-    found_group->connected_users = NULL;
-    group_list = add_group_list(group_list, found_group);
-    return found_group;
+    GROUP* new_group = create_new_group(group_name);
+    group_list = add_group_list(group_list, new_group);
+    return new_group;
 }
 
 void handle_connection_with_client(void *socket_pointer){
   int socket = * (int *) socket_pointer;
-  char* username = receive_message_from_client(socket);
-  char* groupname = receive_message_from_client(socket);
+  char* username = receive_message(socket);
+  char* groupname = receive_message(socket);
   
   GROUP* found_group = find_group(group_list, groupname);
   if(found_group == NULL){
@@ -73,7 +44,7 @@ void handle_connection_with_client(void *socket_pointer){
 
   while(1){
     
-    char *message = receive_message_from_client(socket);
+    char *message = receive_message(socket);
     printf("\nHere is the message: %s", message);
 
   }

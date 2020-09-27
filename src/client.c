@@ -9,36 +9,21 @@
 #include <time.h>
 
 #include "../lib/packet.h"
+#include "../lib/communication.h"
 
-int connect_to_server(char *server_ip, int port)
-{
-  int sockfd;
-  struct sockaddr_in serv_addr;
-  struct hostent *server = gethostbyname(server_ip);
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-    printf("ERROR opening socket\n");
 
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(port);
-  serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
-  bzero(&(serv_addr.sin_zero), 8);
+// void send_message(int data_type, int sockfd, char *message, int seqn)
+// {
+//   int message_len = strlen(message);
+//   PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
 
-  if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    printf("ERROR connecting\n");
-  return sockfd;
-}
-void send_message(int data_type, int sockfd, char *message, int seqn)
-{
-  int message_len = strlen(message);
-  PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
-
-  char *serialized_packet = realloc(NULL, (sizeof(char) * message_len) + HEADER_SIZE);
-  int written_bytes = write(sockfd, serialize_packet(packet, serialized_packet), message_len + HEADER_SIZE);
-  if (written_bytes < 0){
-    printf("ERROR sending message\n");
-  }
-  free(serialized_packet);
-}
+//   char *serialized_packet = realloc(NULL, (sizeof(char) * message_len) + HEADER_SIZE);
+//   int written_bytes = write(sockfd, serialize_packet(packet, serialized_packet), message_len + HEADER_SIZE);
+//   if (written_bytes < 0){
+//     printf("ERROR sending message\n");
+//   }
+//   free(serialized_packet);
+// }
 
 int main(int argc, char *argv[])
 {

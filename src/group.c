@@ -1,8 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <pthread.h>
 
 #include "../lib/group.h"
+
+void print_group_list(GROUP_LIST *group_list){
+	printf("\n Groups: ");
+	while(group_list != NULL){
+		printf("\n%s, connected_users: ", group_list->group->name);
+		INT_LIST* int_list = group_list->group->connected_users;
+		while(int_list != NULL){
+			printf(" %d,", int_list->pid);
+			int_list = int_list->next;
+		}
+		group_list = group_list->next;
+	}
+
+}
+
 
 GROUP *find_group(GROUP_LIST *group_list, char *group_name)
 {
@@ -43,6 +63,14 @@ GROUP_LIST *add_group_list(GROUP_LIST *group_list, GROUP *group)
 	}
 }
 
+GROUP* create_new_group(char* group_name){
+	GROUP* group = malloc(sizeof(GROUP));
+    group->name = group_name;
+    group->connected_users = NULL;
+    group->seqn = 0;
+	return group;
+}
+
 INT_LIST *add_socket_list(INT_LIST *int_list, int socket)
 {
 	//TODO this is a critical section, and should be handle as so
@@ -68,24 +96,20 @@ INT_LIST *add_socket_list(INT_LIST *int_list, int socket)
 	}
 }
 
-
-
-void print_group_list(GROUP_LIST *group_list){
-	printf("\n Groups: ");
-	while(group_list != NULL){
-		printf("\n%s, connected_users: ", group_list->group->name);
-		INT_LIST* int_list = group_list->group->connected_users;
-		while(int_list != NULL){
-			printf(" %d,", int_list->pid);
-			int_list = int_list->next;
-		}
-		group_list = group_list->next;
-	}
-
-}
-
 void associate_socket_group(int socket, GROUP* group){
 	group->connected_users = add_socket_list (group->connected_users, socket);
+}
+
+void send_message_to_group(GROUP* group, char* message){
+	
+		INT_LIST* socket_list = group->connected_users;
+		while(socket_list != NULL){
+			int socket = socket_list->pid;
+
+			socket_list = socket_list->next;
+		}
+		
+	
 }
 
 // int main()

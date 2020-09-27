@@ -1,3 +1,6 @@
+#ifndef PACKET_HEADER
+#define PACKET_HEADER
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,3 +26,5 @@ typedef struct __packet{
 PACKET create_packet(uint16_t type, uint16_t seqn, uint16_t length, uint16_t timestamp, const char* _payload);
 char* serialize_packet(PACKET packet, char *serialized_packet);
 void deserialize_header(char* serialize_header, PACKET *new_packet);
+
+#endif

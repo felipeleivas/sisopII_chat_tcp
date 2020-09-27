@@ -1,4 +1,5 @@
-
+#ifndef GROUP_HEADER
+#define GROUP_HEADER
 typedef struct int_list {
   int pid;
   struct int_list* next; 
@@ -8,6 +9,7 @@ typedef struct int_list {
 typedef struct group {
   char *name;
   INT_LIST*  connected_users;
+  int seqn;
 } GROUP;
 
 typedef struct user {
@@ -31,3 +33,6 @@ GROUP* find_group(GROUP_LIST *group_list, char* group_name);
 GROUP_LIST* add_group_list(GROUP_LIST *group_list, GROUP *group);
 void print_group_list(GROUP_LIST *group_list);
 void associate_socket_group(int socket, GROUP* group);
+GROUP* create_new_group(char* group_name);
+
+#endif
