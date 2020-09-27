@@ -27,7 +27,7 @@ int connect_to_server(char *server_ip, int port)
     printf("ERROR connecting\n");
   return sockfd;
 }
-void send_message(int sockfd, char *message, int seqn)
+void send_message(int data_type, int sockfd, char *message, int seqn)
 {
   int message_len = strlen(message);
   PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
@@ -49,19 +49,20 @@ int main(int argc, char *argv[])
     fprintf(stderr, "usage %s <username> <groupname> <server_ip_address> <port>\n", argv[0]);
     exit(0);
   }
-  // char *username = argv[1];
-  // char *groupName = argv[2];
+  char *username = argv[1];
+  char *groupName = argv[2];
 
   int sockfd = connect_to_server(argv[3], atoi(argv[4]));
-
   int seqn = 0;
+  send_message(DATA_PACKET,sockfd, username, seqn);
+  send_message(DATA_PACKET,sockfd, groupName, seqn);
   while (1)
   {
     printf("Enter the message: ");
     bzero(buffer, 256);
     fgets(buffer, 256, stdin);
 
-    send_message(sockfd, buffer, seqn);
+    send_message(DATA_PACKET,sockfd, buffer, seqn);
   }
   close(sockfd);
   return 0;
