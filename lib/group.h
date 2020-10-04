@@ -10,6 +10,7 @@ typedef struct group {
   char *name;
   INT_LIST*  connected_users;
   int seqn;
+  pthread_mutex_t group_mutex;
 } GROUP;
 
 typedef struct user {

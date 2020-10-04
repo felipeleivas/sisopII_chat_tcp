@@ -20,6 +20,9 @@ void sigpipe_handler(int unused)
 
 GROUP_LIST *group_list = NULL;
 
+pthread_mutex_t find_group_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
 void print_message(void *arg)
 {
 	char *string = (char *)arg;
@@ -28,23 +31,33 @@ void print_message(void *arg)
 
 GROUP *create_group(char *group_name)
 {
-	GROUP *new_group = create_new_group(group_name);
+	
+  GROUP *new_group = create_new_group(group_name);
 	group_list = add_group_list(group_list, new_group);
+  
 	return new_group;
 }
 
-void handle_connection_with_client(void *socket_pointer)
+void* handle_connection_with_client(void *socket_pointer)
 {
 	int socket = *(int *)socket_pointer;
 	char *username = receive_message(socket);
 	char *groupname = receive_message(socket);
+  
+  pthread_mutex_lock(&find_group_mutex);
 	GROUP *found_group = find_group(group_list, groupname);
 	if (found_group == NULL)
 	{
 		found_group = create_group(groupname);
 	}
 
+  pthread_mutex_unlock(&find_group_mutex);
+
 	associate_socket_group(socket, found_group);
+  char buffer[70];
+  sprintf(buffer, "User %s joined group: %s", username, groupname);
+  sleep(1);
+  send_message_to_group(found_group, buffer);
 
 	print_group_list(group_list);
 	int connection_is_alive = 1;
@@ -102,7 +115,7 @@ int accept_connection(int sockfd)
 
 int main(int argc, char *argv[])
 {
-	sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
+	// sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
 
 	int sockfd = bind_server_to_socket();
 
@@ -113,7 +126,7 @@ int main(int argc, char *argv[])
 		int newsockfd = accept_connection(sockfd);
 		if(newsockfd >= 0 ){
 			pthread_t client_connection_thread;
-			pthread_create(&client_connection_thread, NULL, (void *)handle_connection_with_client, &newsockfd);
+			pthread_create(&client_connection_thread, NULL, &handle_connection_with_client, &newsockfd);
 		}
 	}
 	close(sockfd);

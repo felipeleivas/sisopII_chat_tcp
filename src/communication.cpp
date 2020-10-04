@@ -15,7 +15,7 @@ int send_message(int data_type, int sockfd, char *message, int seqn)
   int message_len = strlen(message);
   PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
 
-  char *serialized_packet = realloc(NULL, (sizeof(char) * message_len) + HEADER_SIZE);
+  char *serialized_packet = (char*) realloc(NULL, (sizeof(char) * message_len) + HEADER_SIZE);
   int written_bytes = write(sockfd, serialize_packet(packet, serialized_packet), message_len + HEADER_SIZE);
   if (written_bytes < 0){
     printf("ERROR sending message\n");
@@ -56,7 +56,7 @@ char* receive_message(int socket){
   read_header(socket, &packet);
   int message_length = packet.length;
 
-  char *return_message = realloc(NULL,(sizeof(char) * message_length) + 1);
+  char *return_message = (char*) realloc(NULL,(sizeof(char) * message_length) + 1);
   return_message[message_length]='\0';
   if(read_message(socket, return_message, message_length) == -1){
     return NULL;

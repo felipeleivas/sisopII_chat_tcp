@@ -7,24 +7,12 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "../lib/packet.h"
 #include "../lib/communication.h"
 
-// void send_message(int data_type, int sockfd, char *message, int seqn)
-// {
-//   int message_len = strlen(message);
-//   PACKET packet = create_packet(DATA_PACKET, seqn++, message_len, (int)time(NULL), message);
-
-//   char *serialized_packet = realloc(NULL, (sizeof(char) * message_len) + HEADER_SIZE);
-//   int written_bytes = write(sockfd, serialize_packet(packet, serialized_packet), message_len + HEADER_SIZE);
-//   if (written_bytes < 0){
-//     printf("ERROR sending message\n");
-//   }
-//   free(serialized_packet);
-// }
-
-void print_messages_from_group(void *socket_pointer){
+void* print_messages_from_group(void *socket_pointer){
   int socket = * (int *) socket_pointer;
   
   while(1){
@@ -53,7 +41,7 @@ int main(int argc, char *argv[])
 	send_message(DATA_PACKET, sockfd, groupName, seqn);
 	
 	pthread_t group_connection_thread;
-    pthread_create(&group_connection_thread, NULL, (void *) print_messages_from_group, &sockfd);
+    pthread_create(&group_connection_thread, NULL, &print_messages_from_group, &sockfd);
 	
 	while (1)
 	{

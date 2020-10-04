@@ -10,6 +10,7 @@
 #include "../lib/group.h"
 #include "../lib/communication.h"
 #include "../lib/packet.h"
+
 void print_connection_list(INT_LIST *int_list){
 	while (int_list != NULL)
 	{
@@ -69,10 +70,13 @@ GROUP_LIST *add_group_list(GROUP_LIST *group_list, GROUP *group)
 
 GROUP *create_new_group(char *group_name)
 {
-	GROUP *group = malloc(sizeof(GROUP));
+	GROUP *group = (GROUP*) malloc(sizeof(GROUP));
 	group->name = group_name;
 	group->connected_users = NULL;
 	group->seqn = 0;
+  pthread_mutex_t new_group_mutex = PTHREAD_MUTEX_INITIALIZER;
+  group->group_mutex = new_group_mutex;
+  printf("\nCreated group %s\n", group_name);
 	return group;
 }
 
@@ -138,13 +142,16 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 
 void associate_socket_group(int socket, GROUP *group)
 {
+  pthread_mutex_lock(&group->group_mutex);
 	group->connected_users = add_socket_list(group->connected_users, socket);
+  pthread_mutex_unlock(&group->group_mutex);
 }
 
 void send_message_to_group(GROUP *group, char *message)
 {
-
+  pthread_mutex_lock(&group->group_mutex);
 	INT_LIST *socket_list = group->connected_users;
+  
 	while (socket_list != NULL)
 	{
 		int socket = socket_list->pid;
@@ -155,40 +162,6 @@ void send_message_to_group(GROUP *group, char *message)
 		socket_list = socket_list->next;
 	}
 	group->seqn = group->seqn +1;
+  pthread_mutex_unlock(&group->group_mutex);
+
 }
-
-// int main()
-// {
-// 	GROUP group1;
-// 	group1.connected_users = NULL;
-// 	group1.name = "Nati<1";
-// 	GROUP group2;
-// 	group2.connected_users = NULL;
-// 	group2.name = "Nati<2";
-// 	GROUP group3;
-// 	group3.connected_users = NULL;
-// 	group3.name = "Nati<3";
-// 	GROUP group4;
-// 	group4.connected_users = NULL;
-// 	group4.name = "Nati<4";
-
-// 	GROUP_LIST *groups = add_group_list(NULL, &group1);
-// 	groups = add_group_list(groups, &group2);
-// 	groups = add_group_list(groups, &group3);
-// 	groups = add_group_list(groups, &group4);
-
-// 	associate_socket_group(1, &group1);
-// 	associate_socket_group(2, &group1);
-// 	associate_socket_group(3, &group1);
-// 	associate_socket_group(4, &group2);
-// 	associate_socket_group(5, &group3);
-// 	associate_socket_group(6, &group3);
-// 	associate_socket_group(7, &group1);
-// 	associate_socket_group(8, &group2);
-// 	associate_socket_group(9, &group4);
-// 	associate_socket_group(10, &group4);
-
-// 	print_group_list(groups);
-// 	remove_socket_list(group1.connected_users, 3);
-// 	remove_socket_list(group1.connected_users, 2);
-// }
