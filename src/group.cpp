@@ -6,10 +6,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <fstream>
+#include <string>
+#include <iostream>
+
 
 #include "../lib/group.h"
 #include "../lib/communication.h"
 #include "../lib/packet.h"
+
+using namespace std;
 
 void print_connection_list(INT_LIST *int_list){
 	while (int_list != NULL)
@@ -147,11 +153,25 @@ void associate_socket_group(int socket, GROUP *group)
   pthread_mutex_unlock(&group->group_mutex);
 }
 
+// fstream getFileForGroup(GROUP *group){
+  // fstream fs;
+  // string filename = "/Users/sap/Project/faculdade/sisopii/history/";
+  // filename.append(group->name);
+  // fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
+  // return fs;
+// }
+
 void send_message_to_group(GROUP *group, char *message)
 {
   pthread_mutex_lock(&group->group_mutex);
 	INT_LIST *socket_list = group->connected_users;
-  
+  fstream fs;
+  string filename = "/Users/sap/Project/faculdade/sisopii/history/";
+  filename.append(group->name);
+  fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
+
+  fs << message;
+  fs.close();
 	while (socket_list != NULL)
 	{
 		int socket = socket_list->pid;
@@ -165,3 +185,21 @@ void send_message_to_group(GROUP *group, char *message)
   pthread_mutex_unlock(&group->group_mutex);
 
 }
+
+void restore_message_for_user(int socket, GROUP *group){
+  ifstream fs;
+  string filename = "/Users/sap/Project/faculdade/sisopii/history/";
+  filename.append(group->name);
+  pthread_mutex_lock(&group->group_mutex);
+  fs.open (filename);
+  string line;
+  while (getline(fs, line)) {
+    char message[line.size() +1];
+    strcpy(message, line.c_str());
+    send_message(DATA_PACKET, socket, message, group->seqn);
+  }
+  fs.close();
+  pthread_mutex_unlock(&group->group_mutex);
+
+}
+

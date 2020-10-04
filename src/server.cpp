@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <signal.h>
+#include <string>
+using namespace std;
 
 void sigpipe_handler(int unused)
 {
@@ -53,12 +55,18 @@ void* handle_connection_with_client(void *socket_pointer)
 
   pthread_mutex_unlock(&find_group_mutex);
 
+  restore_message_for_user(socket, found_group);
 	associate_socket_group(socket, found_group);
+  
   char buffer[70];
-  sprintf(buffer, "User %s joined group: %s", username, groupname);
-  sleep(1);
-  send_message_to_group(found_group, buffer);
+  string welcome_message = "User ";
+  welcome_message.append(username);
+  welcome_message.append(" joined group ");
+  welcome_message.append(groupname);
+  welcome_message.append("\n");
 
+  strcpy(buffer, welcome_message.c_str());
+  send_message_to_group(found_group, buffer);
 	print_group_list(group_list);
 	int connection_is_alive = 1;
 	while (connection_is_alive)

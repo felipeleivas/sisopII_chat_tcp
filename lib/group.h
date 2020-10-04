@@ -36,5 +36,5 @@ void print_group_list(GROUP_LIST *group_list);
 void associate_socket_group(int socket, GROUP* group);
 GROUP* create_new_group(char* group_name);
 void send_message_to_group(GROUP *group, char *message);
-
+void restore_message_for_user(int socket, GROUP *group);
 #endif
