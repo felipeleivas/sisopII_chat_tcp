@@ -175,8 +175,6 @@ int count_elements(INT_LIST *int_list)
 
 INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 {
-
-	printf("\nBEFORE: ");
 	print_connection_list(int_list);
 	INT_LIST *first_element_list = int_list;
 	INT_LIST *before = NULL;
@@ -192,7 +190,6 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 			}
 			free(int_list);
       int_list = before;
-			printf("REMOVED connection %d", socket);
 		}else{
 			before = int_list;
 		}
@@ -200,8 +197,6 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 		  int_list = int_list->next;
 
 	}
-	printf("AFTER: \n");
-
 	print_connection_list(first_element_list);
 	printf("\n");
 	return first_element_list;
@@ -230,9 +225,6 @@ void send_message_to_group(GROUP *group, char *message)
   fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
   fs << message;
   fs.close();
-  printf(" sockets : \n");
-  print_connection_list(socket_list);
-  printf("\n");
 
 	while (socket_list != NULL)
 	{
