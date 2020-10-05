@@ -176,7 +176,6 @@ int count_elements(INT_LIST *int_list)
 INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 {
 
-	//TODO this is a critical section, and should be handle as so
 	printf("\nBEFORE: ");
 	print_connection_list(int_list);
 	INT_LIST *first_element_list = int_list;
@@ -192,8 +191,8 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 			else{
 				first_element_list = int_list->next;
 			}
-			free(int_list);
-			printf("REMOVED connection");
+			// free(int_list);
+			printf("REMOVED connection %d");
 		}else{
 			before = int_list;
 		}
@@ -217,9 +216,7 @@ void associate_socket_group(int socket, GROUP *group)
 
 void associate_socket_user(int socket, USER *user)
 {
-  // pthread_mutex_lock(&user->user_mutex);
 	user->connected_sockets = add_socket_list(user->connected_sockets, socket);
-  // pthread_mutex_unlock(&user->user_mutex);
 }
 
 void send_message_to_group(GROUP *group, char *message)
@@ -230,7 +227,6 @@ void send_message_to_group(GROUP *group, char *message)
   string filename = "/Users/sap/Project/faculdade/sisopii/history/";
   filename.append(group->name);
   fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
-
   fs << message;
   fs.close();
 	while (socket_list != NULL)

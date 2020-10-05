@@ -30,6 +30,7 @@ typedef struct group_list {
 } GROUP_LIST; 
 
 
+void print_connection_list(INT_LIST *int_list);
 GROUP* find_group(GROUP_LIST *group_list, char* group_name);
 GROUP_LIST* add_group_list(GROUP_LIST *group_list, GROUP *group);
 void print_group_list(GROUP_LIST *group_list);

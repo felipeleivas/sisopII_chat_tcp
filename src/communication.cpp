@@ -54,11 +54,14 @@ int read_header(int socket, PACKET *packet){
 char* receive_message(int socket){
   PACKET packet;
   read_header(socket, &packet);
+  if(packet.type == END_CONNECTION){
+    return NULL;
+  }
   int message_length = packet.length;
-
   char *return_message = (char*) realloc(NULL,(sizeof(char) * message_length) + 1);
   return_message[message_length]='\0';
   if(read_message(socket, return_message, message_length) == -1){
+
     return NULL;
   }
 

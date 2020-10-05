@@ -20,7 +20,8 @@
 #define move_cursor_line_up(x) printf("%c[%dA", 27, (x))
 #define move_cursor_right(x) printf("%c[C", 27)
 
-
+int sockfd;
+int running = 1;
 void* print_messages_from_group(void *socket_pointer){
   int socket = * (int *) socket_pointer;
   
@@ -39,9 +40,18 @@ void* print_messages_from_group(void *socket_pointer){
   }
   close(socket);
 }
+
+void sigpipe_handler(int unused)
+{
+  send_message(END_CONNECTION, sockfd, "", 0);
+  close(sockfd);
+  exit(0);
+}
+
 int main(int argc, char *argv[])
 {
-	
+  signal(SIGINT, sigpipe_handler);
+
 	char buffer[256];
 	if (argc < 5)
 	{
@@ -51,7 +61,7 @@ int main(int argc, char *argv[])
 	char *username = argv[1];
 	char *groupName = argv[2];
 
-	int sockfd = connect_to_server(argv[3], atoi(argv[4]));
+	sockfd = connect_to_server(argv[3], atoi(argv[4]));
 	int seqn = 0;
 	send_message(DATA_PACKET, sockfd, username, seqn);
 	send_message(DATA_PACKET, sockfd, groupName, seqn);
@@ -60,7 +70,7 @@ int main(int argc, char *argv[])
     pthread_create(&group_connection_thread, NULL, &print_messages_from_group, &sockfd);
 	
     printf("\n\nEnter the message: \n");
-	while (1)
+	while (running)
 	{
 
 		bzero(buffer, 256);

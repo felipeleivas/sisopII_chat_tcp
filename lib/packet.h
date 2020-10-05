@@ -12,6 +12,7 @@
 
 #define DATA_PACKET 1
 #define CMD_PACKET 2
+#define END_CONNECTION 3
 
 #define HEADER_SIZE (sizeof(uint16_t) * 4)
 typedef struct __packet{

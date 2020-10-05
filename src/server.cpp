@@ -12,6 +12,7 @@ using namespace std;
 
 void sigpipe_handler(int unused)
 {
+  
 }
 
 #include "../lib/packet.h"
@@ -78,7 +79,19 @@ void send_max_connections_message(char* username, int socket){
 void send_welcome_user_message_group(char* username, char* groupname, GROUP* group){
   string welcome_message = "User ";
   welcome_message.append(username);
-  welcome_message.append(" joined group ");
+  welcome_message.append(" has joined the group ");
+  welcome_message.append(groupname);
+  welcome_message.append("\n");
+
+  char buffer[welcome_message.size()];
+  strcpy(buffer, welcome_message.c_str());
+  send_message_to_group(group, buffer);
+}
+
+void send_goodbye_user_message_group(char* username, char* groupname, GROUP* group){
+  string welcome_message = "User ";
+  welcome_message.append(username);
+  welcome_message.append(" has left the group ");
   welcome_message.append(groupname);
   welcome_message.append("\n");
 
@@ -147,6 +160,7 @@ void* handle_connection_with_client(void *socket_pointer)
         connection_is_alive = 0;
       }
     }
+    send_goodbye_user_message_group(username, groupname, found_group);
   }
 	free(username);
 	free(groupname);
