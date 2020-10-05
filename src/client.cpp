@@ -8,7 +8,9 @@
 #include <netdb.h>
 #include <time.h>
 #include <pthread.h>
+#include <string>
 
+using namespace std;
 #include "../lib/packet.h"
 #include "../lib/communication.h"
 // ESC-H, ESC-J (I remember using this sequence on VTs)
@@ -43,9 +45,55 @@ void* print_messages_from_group(void *socket_pointer){
 
 void sigpipe_handler(int unused)
 {
+  printf("acabou");
   send_message(END_CONNECTION, sockfd, "", 0);
   close(sockfd);
   exit(0);
+}
+
+int isLetter(char c){
+  return ((c >= 'a' && c<='z' ) || (c >= 'A' && c<='Z'));
+}
+
+int isNumber(char c){
+  return (c >= '0' && c <= '9');
+}
+
+int has_error_name(char *prefix, char *name, int has_error){
+  if(4 >strlen(name) || strlen(name)>20){
+
+    string message = "";
+    message.append(prefix);
+    message.append(" must have at least 4 and at most 20 letters.");
+    printf("%s\n", message.c_str());
+    has_error = 1;
+  }
+  
+  int has_error_format = 0;
+  for(int i=0; i<strlen(name); i++){
+    char c = name[i];
+    if(i== 0){
+      if(!isLetter(c)){
+        has_error = 1;
+        has_error_format = 1;
+      }
+    }
+    else{
+      if(!isLetter(c) && !isNumber(c) && c != '.'){
+        has_error = 1;
+        has_error_format = 1;
+      }
+    }
+  }
+
+  if(has_error_format == 1){
+    string message = "";
+    message.append(prefix);
+    message.append(" should start with a letter and can only have letters, numbers and dot.");
+    printf("%s\n", message.c_str());
+  }
+
+  return has_error;
 }
 
 int main(int argc, char *argv[])
@@ -60,27 +108,41 @@ int main(int argc, char *argv[])
 	}
 	char *username = argv[1];
 	char *groupName = argv[2];
+  int has_error = 0;
+  has_error = has_error_name("Your username", username, has_error);
+  has_error = has_error_name("Your groupname", groupName, has_error);
+ 
+  if(has_error == 1){
+    
+  }
+  else{
+    sockfd = connect_to_server(argv[3], atoi(argv[4]));
+    int seqn = 0;
+    send_message(DATA_PACKET, sockfd, username, seqn);
+    send_message(DATA_PACKET, sockfd, groupName, seqn);
+    
+    pthread_t group_connection_thread;
+      pthread_create(&group_connection_thread, NULL, &print_messages_from_group, &sockfd);
+    
+      printf("\n\nEnter the message: \n");
+    while (!feof(stdin))
+    {
 
-	sockfd = connect_to_server(argv[3], atoi(argv[4]));
-	int seqn = 0;
-	send_message(DATA_PACKET, sockfd, username, seqn);
-	send_message(DATA_PACKET, sockfd, groupName, seqn);
-	
-	pthread_t group_connection_thread;
-    pthread_create(&group_connection_thread, NULL, &print_messages_from_group, &sockfd);
-	
-    printf("\n\nEnter the message: \n");
-	while (running)
-	{
+      bzero(buffer, 256);
+      fgets(buffer, 256, stdin);
+      
+      if(!feof(stdin)){
+        
+      }
 
-		bzero(buffer, 256);
-		fgets(buffer, 256, stdin);
+      remove_last_line();
+      move_cursor_line_up(1);
 
-    remove_last_line();
-    move_cursor_line_up(1);
+      send_message(DATA_PACKET, sockfd, buffer, seqn);
+    }
+    send_message(END_CONNECTION, sockfd, "", 0);
 
-		send_message(DATA_PACKET, sockfd, buffer, seqn);
-	}
-	close(sockfd);
+    close(sockfd);
+  }
 	return 0;
 }
