@@ -194,6 +194,7 @@ void restore_message_for_user(int socket, GROUP *group){
   fs.open (filename);
   string line;
   while (getline(fs, line)) {
+    line.append("\n");
     char message[line.size() +1];
     strcpy(message, line.c_str());
     send_message(DATA_PACKET, socket, message, group->seqn);
