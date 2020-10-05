@@ -147,7 +147,7 @@ void* handle_connection_with_client(void *socket_pointer)
     send_welcome_user_message_group(username, groupname, found_group);
     
     int connection_is_alive = 1;
-    while (connection_is_alive)
+    while (connection_is_alive == 1)
     {
 
       char *message = receive_message(socket);
@@ -160,10 +160,19 @@ void* handle_connection_with_client(void *socket_pointer)
         connection_is_alive = 0;
       }
     }
+
+    pthread_mutex_lock(&found_group->group_mutex);
+    found_group->connected_users = remove_socket_list(found_group->connected_users, socket);
+    pthread_mutex_unlock(&found_group->group_mutex);
+
+    pthread_mutex_lock(&found_user->user_mutex);
+    found_user->connected_sockets = remove_socket_list(found_user->connected_sockets, socket);
+    pthread_mutex_unlock(&found_user->user_mutex);
+
     send_goodbye_user_message_group(username, groupname, found_group);
   }
 	free(username);
-	free(groupname);
+	// free(groupname);
 	close(socket);
 }
 

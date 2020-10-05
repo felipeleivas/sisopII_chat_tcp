@@ -43,4 +43,5 @@ USER_LIST *add_user_list(USER_LIST *user_list, USER *user);
 USER *create_new_user(char *user_name);
 void associate_socket_user(int socket, USER *user);
 int count_elements(INT_LIST *int_list);
+INT_LIST *remove_socket_list(INT_LIST *int_list, int socket);
 #endif
