@@ -33,7 +33,7 @@ void* print_messages_from_group(void *socket_pointer){
     move_cursor_line_up(1);
     move_cursor_line_up(1);
 
-    printf("\nMessage from group: %s", message);
+    printf("\n%s", message);
     printf("\nEnter the message: \n");
 
   }

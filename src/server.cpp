@@ -74,7 +74,13 @@ void* handle_connection_with_client(void *socket_pointer)
 		char *message = receive_message(socket);
 		if (message != NULL)
 		{
-			send_message_to_group(found_group, message);
+      string str_message = "[";
+      str_message.append(username);
+      str_message.append("]:");
+      str_message.append(message);
+      char buffer[str_message.size()];
+      strcpy(buffer, str_message.c_str());
+			send_message_to_group(found_group, buffer);
 			free(message);
 		}
 		else{
