@@ -179,9 +179,8 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 	printf("\nBEFORE: ");
 	print_connection_list(int_list);
 	INT_LIST *first_element_list = int_list;
-
-
 	INT_LIST *before = NULL;
+
 	while (int_list != NULL)
 	{
 		if(int_list->pid == socket){
@@ -191,12 +190,14 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 			else{
 				first_element_list = int_list->next;
 			}
-			// free(int_list);
-			printf("REMOVED connection %d");
+			free(int_list);
+      int_list = before;
+			printf("REMOVED connection %d", socket);
 		}else{
 			before = int_list;
 		}
-		int_list = int_list->next;
+    if(int_list != NULL)
+		  int_list = int_list->next;
 
 	}
 	printf("AFTER: \n");
@@ -229,14 +230,20 @@ void send_message_to_group(GROUP *group, char *message)
   fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
   fs << message;
   fs.close();
+  printf(" sockets : \n");
+  print_connection_list(socket_list);
+  printf("\n");
+
 	while (socket_list != NULL)
 	{
 		int socket = socket_list->pid;
+    
 		if(send_message(DATA_PACKET, socket, message, group->seqn) == -1){
-			socket_list = remove_socket_list(socket_list, socket);
+			socket_list = remove_socket_list(group->connected_users, socket);
 			group->connected_users = socket_list;
 		}
-		socket_list = socket_list->next;
+    if(socket_list != NULL )
+		  socket_list = socket_list->next;
 	}
 	group->seqn = group->seqn +1;
   pthread_mutex_unlock(&group->group_mutex);
