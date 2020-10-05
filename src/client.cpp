@@ -9,6 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <string>
+#include <iostream> 
 
 using namespace std;
 #include "../lib/packet.h"
@@ -100,7 +101,6 @@ int main(int argc, char *argv[])
 {
   signal(SIGINT, sigpipe_handler);
 
-	char buffer[256];
 	if (argc < 5)
 	{
 		fprintf(stderr, "usage %s <username> <groupname> <server_ip_address> <port>\n", argv[0]);
@@ -127,13 +127,10 @@ int main(int argc, char *argv[])
       printf("\n\nEnter the message: \n");
     while (!feof(stdin))
     {
-
-      bzero(buffer, 256);
-      fgets(buffer, 256, stdin);
-      
-      if(!feof(stdin)){
-        
-      }
+      string str;
+      getline(cin, str); 
+      char buffer[str.size() +1];
+      strcpy(buffer, str.c_str());
 
       remove_last_line();
       move_cursor_line_up(1);
