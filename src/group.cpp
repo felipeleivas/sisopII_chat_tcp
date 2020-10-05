@@ -74,6 +74,45 @@ GROUP_LIST *add_group_list(GROUP_LIST *group_list, GROUP *group)
 	}
 }
 
+USER *find_user(USER_LIST *user_list, char *user_name)
+{
+	//TODO this is a critical section, and should be handle as so
+	while (user_list != NULL)
+	{
+		if (strcmp(user_list->user->name, user_name) == 0)
+		{
+			return user_list->user;
+		}
+		user_list = user_list->next;
+	}
+	return NULL;
+}
+
+USER_LIST *add_user_list(USER_LIST *user_list, USER *user)
+{
+	//TODO this is a critical section, and should be handle as so
+	USER_LIST *first_element_list = user_list;
+	USER_LIST *new_user_list = (USER_LIST *)malloc(sizeof(USER_LIST));
+	new_user_list->user = user;
+	new_user_list->next = NULL;
+	if (user_list != NULL)
+	{
+
+		USER_LIST *before = NULL;
+		while (user_list != NULL)
+		{
+			before = user_list;
+			user_list = user_list->next;
+		}
+		before->next = new_user_list;
+		return first_element_list;
+	}
+	else
+	{
+		return new_user_list;
+	}
+}
+
 GROUP *create_new_group(char *group_name)
 {
 	GROUP *group = (GROUP*) malloc(sizeof(GROUP));
@@ -86,9 +125,19 @@ GROUP *create_new_group(char *group_name)
 	return group;
 }
 
+USER *create_new_user(char *user_name)
+{
+	USER *user = (USER*) malloc(sizeof(GROUP));
+	user->name = user_name;
+	user->connected_sockets = NULL;
+  pthread_mutex_t new_user_mutex = PTHREAD_MUTEX_INITIALIZER;
+  user->user_mutex = new_user_mutex;
+  // printf("\nCreated group %s\n", group_name);
+	return user;
+}
+
 INT_LIST *add_socket_list(INT_LIST *int_list, int socket)
 {
-	//TODO this is a critical section, and should be handle as so
 	INT_LIST *first_element_list = int_list;
 	INT_LIST *new_list = (INT_LIST *)malloc(sizeof(INT_LIST));
 	new_list->pid = socket;
@@ -110,6 +159,19 @@ INT_LIST *add_socket_list(INT_LIST *int_list, int socket)
 		return new_list;
 	}
 }
+
+
+int count_elements(INT_LIST *int_list)
+{
+  int i = 0;
+  while (int_list != NULL)
+  {
+    i++;
+    int_list = int_list->next;
+  }
+	return i;
+}
+
 
 INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 {
@@ -151,6 +213,13 @@ void associate_socket_group(int socket, GROUP *group)
   pthread_mutex_lock(&group->group_mutex);
 	group->connected_users = add_socket_list(group->connected_users, socket);
   pthread_mutex_unlock(&group->group_mutex);
+}
+
+void associate_socket_user(int socket, USER *user)
+{
+  // pthread_mutex_lock(&user->user_mutex);
+	user->connected_sockets = add_socket_list(user->connected_sockets, socket);
+  // pthread_mutex_unlock(&user->user_mutex);
 }
 
 void send_message_to_group(GROUP *group, char *message)

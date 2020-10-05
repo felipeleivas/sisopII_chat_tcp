@@ -21,8 +21,9 @@ void sigpipe_handler(int unused)
 #define PORT 4000
 
 GROUP_LIST *group_list = NULL;
+USER_LIST *user_list = NULL;
 
-pthread_mutex_t find_group_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t find_group_mutex = PTHREAD_MUTEX_INITIALIZER, find_user_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void print_message(void *arg)
@@ -40,30 +41,41 @@ GROUP *create_group(char *group_name)
 	return new_group;
 }
 
-void* handle_connection_with_client(void *socket_pointer)
+USER *create_user(char *username)
 {
-	int socket = *(int *)socket_pointer;
-	char *username = receive_message(socket);
-	char *groupname = receive_message(socket);
+	
+  USER *new_user = create_new_user(username);
+	user_list = add_user_list(user_list, new_user);
   
-  pthread_mutex_lock(&find_group_mutex);
-	GROUP *found_group = find_group(group_list, groupname);
-	if (found_group == NULL)
-	{
-		found_group = create_group(groupname);
-	}
+	return new_user;
+}
 
-  pthread_mutex_unlock(&find_group_mutex);
+void send_group_name_message(char* groupname, int socket){
 
   string group_welcome_message = "GROUP: ";
   group_welcome_message.append(groupname);
   group_welcome_message.append("\n");
+
   char bufferAux[group_welcome_message.size()];
   strcpy(bufferAux, group_welcome_message.c_str());
+
   send_message(DATA_PACKET, socket, bufferAux, 0);
-  restore_message_for_user(socket, found_group);
-	associate_socket_group(socket, found_group);
-  
+}
+
+void send_max_connections_message(char* username, int socket){
+
+  string group_welcome_message = "The user: ";
+  group_welcome_message.append(username);
+  group_welcome_message.append("is already loged in two devices, which is the maximum allowed");
+  group_welcome_message.append("\n");
+
+  char bufferAux[group_welcome_message.size()];
+  strcpy(bufferAux, group_welcome_message.c_str());
+
+  send_message(DATA_PACKET, socket, bufferAux, 0);
+}
+
+void send_welcome_user_message_group(char* username, char* groupname, GROUP* group){
   string welcome_message = "User ";
   welcome_message.append(username);
   welcome_message.append(" joined group ");
@@ -72,28 +84,70 @@ void* handle_connection_with_client(void *socket_pointer)
 
   char buffer[welcome_message.size()];
   strcpy(buffer, welcome_message.c_str());
-  send_message_to_group(found_group, buffer);
-	print_group_list(group_list);
-	int connection_is_alive = 1;
-	while (connection_is_alive)
-	{
+  send_message_to_group(group, buffer);
+}
 
-		char *message = receive_message(socket);
-		if (message != NULL)
-		{
-      string str_message = "[";
-      str_message.append(username);
-      str_message.append("]:");
-      str_message.append(message);
-      char buffer[str_message.size()];
-      strcpy(buffer, str_message.c_str());
-			send_message_to_group(found_group, buffer);
-			free(message);
-		}
-		else{
-			connection_is_alive = 0;
-		}
+void  send_message_from_user(char* username, char* message, GROUP* group){
+  string str_message = "[";
+  str_message.append(username);
+  str_message.append("]:");
+  str_message.append(message);
+  char buffer[str_message.size()];
+  strcpy(buffer, str_message.c_str());
+  send_message_to_group(group, buffer);
+}
+
+void* handle_connection_with_client(void *socket_pointer)
+{
+	int socket = *(int *)socket_pointer;
+	char *username = receive_message(socket);
+	char *groupname = receive_message(socket);
+  
+  pthread_mutex_lock(&find_user_mutex);
+	USER *found_user = find_user(user_list, username);
+	if (found_user == NULL)
+	{
+		found_user = create_user(username);
 	}
+  pthread_mutex_unlock(&find_user_mutex);
+  
+  pthread_mutex_lock(&found_user->user_mutex);
+  if(count_elements(found_user->connected_sockets) >= 2){
+    pthread_mutex_unlock(&found_user->user_mutex);
+    send_max_connections_message(username, socket);
+  }
+  else{
+    associate_socket_user(socket, found_user);
+    pthread_mutex_unlock(&found_user->user_mutex);
+  
+    pthread_mutex_lock(&find_group_mutex);
+    GROUP *found_group = find_group(group_list, groupname);
+    if (found_group == NULL)
+    {
+      found_group = create_group(groupname);
+    }
+    pthread_mutex_unlock(&find_group_mutex);
+
+    send_group_name_message(groupname, socket);
+    restore_message_for_user(socket, found_group);
+    associate_socket_group(socket, found_group);
+    send_welcome_user_message_group(username, groupname, found_group);
+    
+    int connection_is_alive = 1;
+    while (connection_is_alive)
+    {
+
+      char *message = receive_message(socket);
+      if (message != NULL)
+      {
+        send_message_from_user(username, message, found_group);
+        free(message);
+      }
+      else{
+        connection_is_alive = 0;
+      }
+    }
+  }
 	free(username);
 	free(groupname);
 	close(socket);
