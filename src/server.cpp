@@ -63,7 +63,6 @@ void* handle_connection_with_client(void *socket_pointer)
   welcome_message.append(username);
   welcome_message.append(" joined group ");
   welcome_message.append(groupname);
-  welcome_message.append("\n");
 
   strcpy(buffer, welcome_message.c_str());
   send_message_to_group(found_group, buffer);
@@ -124,6 +123,7 @@ int accept_connection(int sockfd)
 int main(int argc, char *argv[])
 {
 	// sigaction(SIGPIPE, &(struct sigaction){sigpipe_handler}, NULL);
+    signal(SIGPIPE, sigpipe_handler);
 
 	int sockfd = bind_server_to_socket();
 
