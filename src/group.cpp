@@ -153,14 +153,6 @@ void associate_socket_group(int socket, GROUP *group)
   pthread_mutex_unlock(&group->group_mutex);
 }
 
-// fstream getFileForGroup(GROUP *group){
-  // fstream fs;
-  // string filename = "/Users/sap/Project/faculdade/sisopii/history/";
-  // filename.append(group->name);
-  // fs.open (filename , std::fstream::in | std::fstream::out | std::fstream::app);
-  // return fs;
-// }
-
 void send_message_to_group(GROUP *group, char *message)
 {
   pthread_mutex_lock(&group->group_mutex);

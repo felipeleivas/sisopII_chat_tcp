@@ -59,8 +59,10 @@ int main(int argc, char *argv[])
 	pthread_t group_connection_thread;
     pthread_create(&group_connection_thread, NULL, &print_messages_from_group, &sockfd);
 	
+    printf("\n\nEnter the message: \n");
 	while (1)
 	{
+
 		bzero(buffer, 256);
 		fgets(buffer, 256, stdin);
 

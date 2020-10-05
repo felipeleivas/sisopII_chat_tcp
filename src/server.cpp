@@ -55,15 +55,22 @@ void* handle_connection_with_client(void *socket_pointer)
 
   pthread_mutex_unlock(&find_group_mutex);
 
+  string group_welcome_message = "GROUP: ";
+  group_welcome_message.append(groupname);
+  group_welcome_message.append("\n");
+  char bufferAux[group_welcome_message.size()];
+  strcpy(bufferAux, group_welcome_message.c_str());
+  send_message(DATA_PACKET, socket, bufferAux, 0);
   restore_message_for_user(socket, found_group);
 	associate_socket_group(socket, found_group);
   
-  char buffer[70];
   string welcome_message = "User ";
   welcome_message.append(username);
   welcome_message.append(" joined group ");
   welcome_message.append(groupname);
+  welcome_message.append("\n");
 
+  char buffer[welcome_message.size()];
   strcpy(buffer, welcome_message.c_str());
   send_message_to_group(found_group, buffer);
 	print_group_list(group_list);
