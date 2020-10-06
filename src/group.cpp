@@ -121,7 +121,7 @@ GROUP *create_new_group(char *group_name)
 	group->seqn = 0;
   pthread_mutex_t new_group_mutex = PTHREAD_MUTEX_INITIALIZER;
   group->group_mutex = new_group_mutex;
-  printf("\nCreated group %s\n", group_name);
+  // printf("\nCreated group %s\n", group_name);
 	return group;
 }
 
@@ -175,7 +175,8 @@ int count_elements(INT_LIST *int_list)
 
 INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 {
-	print_connection_list(int_list);
+  // printf("\n Before:");
+	// print_connection_list(int_list);
 	INT_LIST *first_element_list = int_list;
 	INT_LIST *before = NULL;
 
@@ -197,8 +198,9 @@ INT_LIST *remove_socket_list(INT_LIST *int_list, int socket)
 		  int_list = int_list->next;
 
 	}
-	print_connection_list(first_element_list);
-	printf("\n");
+  // printf("\n After remove element %d:", socket);
+	// print_connection_list(first_element_list);
+	// printf("\n");
 	return first_element_list;
 }
 

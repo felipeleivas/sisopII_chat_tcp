@@ -26,13 +26,6 @@ USER_LIST *user_list = NULL;
 
 pthread_mutex_t find_group_mutex = PTHREAD_MUTEX_INITIALIZER, find_user_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-void print_message(void *arg)
-{
-	char *string = (char *)arg;
-	printf("%s", string);
-}
-
 GROUP *create_group(char *group_name)
 {
 	
@@ -89,6 +82,7 @@ void send_welcome_user_message_group(char* username, char* groupname, GROUP* gro
 }
 
 void send_goodbye_user_message_group(char* username, char* groupname, GROUP* group){
+  // printf("Good bye friend\n");
   string welcome_message = "User ";
   welcome_message.append(username);
   welcome_message.append(" has left the group ");
@@ -98,6 +92,8 @@ void send_goodbye_user_message_group(char* username, char* groupname, GROUP* gro
   char buffer[welcome_message.size()];
   strcpy(buffer, welcome_message.c_str());
   send_message_to_group(group, buffer);
+  // printf("Good bye friend again\n");
+
 }
 
 void  send_message_from_user(char* username, char* message, GROUP* group){

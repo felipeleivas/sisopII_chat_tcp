@@ -129,13 +129,18 @@ int main(int argc, char *argv[])
     {
       string str;
       getline(cin, str); 
-      char buffer[str.size() +1];
-      strcpy(buffer, str.c_str());
 
       remove_last_line();
       move_cursor_line_up(1);
+      if(str.size() > 0){
+      str.append("\n");
+
+      char buffer[str.size() +1];
+      strcpy(buffer, str.c_str());
+
 
       send_message(DATA_PACKET, sockfd, buffer, seqn);
+      }
     }
     send_message(END_CONNECTION, sockfd, "", 0);
 
